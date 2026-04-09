@@ -6,14 +6,14 @@
     <title>VSME Suite - Enterprise Edition (MVVM)</title>
     
     <!-- React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
     
     <!-- Babel for JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.23.0/babel.min.js"></script>
     
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?version=3.4.1"></script>
     
     <!-- Lucide Icons -->
     <script>window.react = window.React;</script>
@@ -259,8 +259,10 @@
             const saveJson = () => {
                 const year = data.meta.periodEnd ? new Date(data.meta.periodEnd).getFullYear() : new Date().getFullYear();
                 const compName = (data.meta.companyName || "Azienda").replace(/[^a-zA-Z0-9]/g, '_');
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+                const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+                const dataStr = URL.createObjectURL(blob);
                 const a = document.createElement('a'); a.href = dataStr; a.download = `Report_VSME_${compName}_${year}.json`; a.click();
+                setTimeout(() => URL.revokeObjectURL(dataStr), 100);
             };
 
             return { data, updateData, updateScope3, loadJson, saveJson };
@@ -664,7 +666,7 @@
                                             <td className="p-2"><input type="text" placeholder="Es. Italia" className="w-full p-1.5 border rounded text-xs bg-slate-50" value={s.country} onChange={e=>updateSite(s.id, 'country', e.target.value)} /></td>
                                             <td className="p-2">
                                                 <input type="text" placeholder="Es. 45.12345, 7.12345" className={`w-full p-1.5 border rounded text-xs mb-1 ${isValidGeo ? 'bg-slate-50 border-slate-300' : (s.coordinates ? 'bg-red-50 border-red-500' : 'bg-slate-50 border-slate-300')}`} value={s.coordinates} onChange={e=>updateSite(s.id, 'coordinates', e.target.value)} />
-                                                <a href={mapLink} target="_blank" rel="noreferrer" className="text-[10px] flex items-center gap-1 font-bold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-2 py-1 rounded inline-block w-max"><MapPin size={12}/> {isValidGeo ? 'Test Coordinate' : 'Cerca su Maps'}</a>
+                                                <a href={mapLink} target="_blank" rel="noopener noreferrer" className="text-[10px] flex items-center gap-1 font-bold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-2 py-1 rounded inline-block w-max"><MapPin size={12}/> {isValidGeo ? 'Test Coordinate' : 'Cerca su Maps'}</a>
                                             </td>
                                             <td className="p-2 text-center align-top"><button onClick={() => onChange(sites.filter(x => x.id !== s.id))} className="text-slate-400 hover:text-red-500" disabled={sites.length===1}><Trash2 size={16}/></button></td>
                                         </tr>
@@ -981,7 +983,7 @@
                             <span className="text-sm font-bold text-amber-800">Importa Fattori DEFRA</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <a href="https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2024" target="_blank" rel="noreferrer" className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1"><ExternalLink size={12}/> Scarica da DEFRA</a>
+                            <a href="https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2024" target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1"><ExternalLink size={12}/> Scarica da DEFRA</a>
                             <InfoButton topic="defra"/>
                         </div>
                     </div>
@@ -1216,7 +1218,7 @@
             return (
                 <div className="space-y-8 animate-fadeIn">
                     <div className="bg-slate-50 p-5 rounded-lg border border-slate-200 shadow-sm">
-                        <div className="flex justify-between items-center mb-4 border-b pb-3"><h3 className="font-bold text-sm text-slate-800 flex items-center gap-2"><Globe size={18} className="text-emerald-600"/> Mappatura Aree Sensibili</h3><div className="flex gap-3"><a href="https://natura2000.eea.europa.eu/" target="_blank" rel="noreferrer" className="text-xs font-semibold text-blue-600 hover:underline">Natura 2000</a></div></div>
+                        <div className="flex justify-between items-center mb-4 border-b pb-3"><h3 className="font-bold text-sm text-slate-800 flex items-center gap-2"><Globe size={18} className="text-emerald-600"/> Mappatura Aree Sensibili</h3><div className="flex gap-3"><a href="https://natura2000.eea.europa.eu/" target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline">Natura 2000</a></div></div>
                         <div className="border rounded-lg overflow-x-auto bg-white">
                             <table className="w-full text-sm text-left"><thead className="bg-slate-100 text-xs border-b"><tr><th className="p-3">Sito (dal B1)</th><th className="p-3">Area (ha)</th><th className="p-3">Area Sensibile</th><th className="p-3">Specifiche</th></tr></thead>
                                 <tbody>
@@ -1637,7 +1639,7 @@
             const validUrl = url.startsWith('http') ? url : `https://${url}`;
             const displayUrl = url.length > 40 ? url.substring(0, 40) + '...' : url;
             return (
-                <a href={validUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 underline break-all font-mono text-xs bg-blue-50 px-2 py-1 rounded border border-blue-100">
+                <a href={validUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 underline break-all font-mono text-xs bg-blue-50 px-2 py-1 rounded border border-blue-100">
                     <ExternalLink size={12} className="shrink-0" />{displayUrl}
                 </a>
             );
