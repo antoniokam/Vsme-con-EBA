@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VSME Suite - Enterprise Edition (MVVM)</title>
-    
+
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-    
+
     <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone@7.23.0/babel.min.js"></script>
-    
+
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?version=3.4.1"></script>
-    
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+
     <!-- Lucide Icons -->
     <script>window.react = window.React;</script>
     <script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.min.js"></script>
-    
+
     <!-- SheetJS for DEFRA Excel import -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 
@@ -28,7 +28,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
         .animate-fadeIn { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-        
+
         /* =========================================================
            STILI PER STAMPA NATIVA (Native PDF Generation)
            ========================================================= */
@@ -41,7 +41,7 @@
             .pdf-page-break { page-break-before: always; }
             .pdf-avoid-break { page-break-inside: avoid; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            
+
             /* Print Specific Typography */
             h1, h2, h3, h4, h5 { page-break-after: avoid; }
             table { page-break-inside: auto; border-collapse: collapse; width: 100%; }
@@ -56,11 +56,11 @@
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useCallback, createContext, useContext } = React;
-        const { 
-            Leaf, Calculator, BookOpen, Upload, Save, Info, Settings, Zap, Users, Factory, 
-            AlertCircle, Printer, ChevronDown, CheckCircle2, Truck, Box, Recycle, Coins, 
-            Building, ShieldAlert, Target, Landmark, FileSpreadsheet, Activity, Search, X, 
-            MapPin, Plus, Trash2, ExternalLink, Flame, Car, Globe, Droplets, Droplet, 
+        const {
+            Leaf, Calculator, BookOpen, Upload, Save, Info, Settings, Zap, Users, Factory,
+            AlertCircle, Printer, ChevronDown, CheckCircle2, Truck, Box, Recycle, Coins,
+            Building, ShieldAlert, Target, Landmark, FileSpreadsheet, Activity, Search, X,
+            MapPin, Plus, Trash2, ExternalLink, Flame, Car, Globe, Droplets, Droplet,
             Briefcase, RefreshCw, AlertTriangle, Layers, Target: TargetIcon, Crosshair,
             Award, ShieldOff, FileText
         } = window.LucideReact;
@@ -89,6 +89,9 @@
         const SENSITIVE_AREA_TYPES = ["Nessuna", "Rete Natura 2000", "Patrimonio dell'Umanità UNESCO", "Key Biodiversity Area (KBA)", "Lista Rossa IUCN", "Altra area protetta"];
         const POLLUTANTS_PRESETS = ["Aria - Ossidi di Azoto (NOx)", "Aria - Ossidi di Zolfo (SOx)", "Aria - Particolato (PM10 / PM2.5)", "Aria - Ammoniaca (NH3)", "Acqua - Domanda Chimica Ossigeno (COD)", "Acqua - Domanda Biochimica Ossigeno (BOD)", "Acqua - Metalli Pesanti", "Suolo - Metalli Pesanti (Fanghi)", "Altro (Specifica manualmente...)"];
         const WASTE_PRESETS = { 'non-hazardous': ["Rifiuti urbani indifferenziati", "Imballaggi in carta e cartone (15 01 01)", "Imballaggi in plastica (15 01 02)", "Imballaggi in legno (15 01 03)", "Vetro (15 01 07)", "Metalli (15 01 04)", "Altro non pericoloso..."], 'hazardous': ["Oli esauriti / Lubrificanti (13 02*)", "Batterie al piombo (16 06 01*)", "Amianto (17 09 03*)", "Apparecchiature elettroniche WEEE (20 01 35*)", "Vernici e solventi (08 01 11*)", "Altro pericoloso / radioattivo..."] };
+
+        // Dizionario Livelli Stress Idrico EFRAG > WRI Aqueduct
+        const STRESS_LEVELS = ['Basso (<10%)', 'Medio-Basso (10-20%)', 'Medio-Alto (20-40%)', 'Alto (40-80%)', 'Estremo (>80%)'];
 
         const SCOPE3_CATEGORIES = [
             { id: 'cat1', label: '1. Beni e servizi acquistati', type: 'upstream', icon: <Box size={16}/>, volUnit: 'Tonn.', defaultSpendFactor: 0.45, defaultVolFactor: 2.5 },
@@ -121,7 +124,7 @@
             'b3_scope3': { title: "Scope 3: Emissioni Catena del Valore", text: "Lo Scope 3 copre le emissioni nella catena del valore (fornitori, clienti, logistica, dipendenti).\n\n📌 Come compilare:\n• Attiva solo le categorie rilevanti per il tuo settore\n• Metodo Spend: inserisci la spesa (€) per quella categoria — più semplice ma meno preciso\n• Metodo Volume: inserisci la quantità fisica (tonnellate, km, kWh) — più accurato\n\n⚠️ Categorie spesso obbligatorie:\nCat. 1 (Acquisti) e Cat. 6 (Viaggi di lavoro) sono richieste per quasi tutti i settori.\nPer settori industriali, Cat. 4 (Trasporti) e Cat. 5 (Rifiuti) sono essenziali.\n\n💡 Puoi importare i fattori DEFRA aggiornati tramite il tasto apposito.", eba: "Lo Scope 3 può rappresentare fino al 90% delle emissioni totali. Le banche lo usano per valutare il rischio di transizione dell'intera filiera." },
             'b4': { title: "B4: Inquinanti Atmosferici e Acquatici", text: "Registro delle emissioni inquinanti (non GHG) rilasciate nell'ambiente.\n\n📌 Cosa inserire:\n• Materialità: Settori come servizi o uffici sono esentati.\n• Aria: NOx, SOx, polveri sottili (PM10, PM2.5), ammoniaca.\n• Acqua: COD, BOD, metalli pesanti, nitrati.\n• Suolo: Sversamenti o fanghi industriali." },
             'b5': { title: "B5: Biodiversità e Uso del Suolo", text: "Impatto fisico degli spazi aziendali sull'ecosistema.\n\n📌 Cosa inserire:\n• Per ogni sito: area totale in ettari e tipo di area sensibile circostante\n• Aree sensibili: Rete Natura 2000, UNESCO, KBA, Liste Rosse IUCN\n• Uso del suolo: superficie impermeabilizzata (parcheggi, edifici), aree naturali gestite dentro/fuori l'azienda\n\n💡 Verifica la prossimità a Natura 2000 sul portale EEA (link disponibile nel modulo).", eba: "La presenza di siti in aree Natura 2000 o KBA è un trigger automatico per la valutazione del rischio biodiversità nel PCAF e nell'EU Taxonomy." },
-            'b6': { title: "B6: Risorse Idriche", text: "Gestione dell'acqua nei siti operativi.\n\n📌 Cosa inserire:\n• Prelievo (m³): acqua totale prelevata da rete, pozzi, acque superficiali\n• Scarico (m³): acqua reimmessa nell'ambiente o in fognatura (il consumo = prelievo − scarico)\n• Alta Scarsità: spunta se il sito è in zona a stress idrico elevato (WRI Aqueduct)\n\n💡 Wizard Uffici: usa il calcolatore automatico per sedi non produttive basato su dipendenti/m².", eba: "Il consumo idrico in zone ad alta scarsità è un KPI chiave per il rischio fisico climatico (drought risk) nel portafoglio bancario." },
+            'b6': { title: "B6: Risorse Idriche", text: "Gestione dell'acqua nei siti operativi.\n\n📌 Cosa inserire:\n• Prelievo (m³): acqua prelevata da rete, pozzi, ecc.\n• Scarico (m³): acqua reimmessa o in fognatura\n• Scarsità (Stress Idrico): seleziona la fascia di rischio del tuo sito.\n\n⚠️ Linee Guida EFRAG (Par. 91-93):\nUn'area è a 'forte stress idrico' se l'indicatore di stress di base supera il 40%.\nNel WRI Aqueduct, la soglia >40% scatta SOLO se l'indicatore 'Water Stress' è in fascia 'Alto (40-80%)' o 'Estremo (>80%)'. Assicurati di non confonderlo con l'indicatore 'Overall Water Risk'.", eba: "Il consumo idrico in zone ad alta scarsità (>40% WRI) è un KPI chiave per il rischio fisico climatico (drought risk) nel portafoglio bancario." },
             'b7': { title: "B7: Economia Circolare e Rifiuti", text: "Documenta la gestione dei rifiuti e la strategia circolare aziendale.\n\n📌 Cosa inserire:\n• Strategia circolare: descrivi le azioni di eliminazione, circolazione e rigenerazione dei materiali\n• Rifiuti: per ogni flusso inserisci tipologia (pericoloso/non pericoloso), quantità totale e quota avviata a recupero/riciclo\n• Flussi di massa: per settori manifatturieri, peso materie prime in entrata e prodotti in uscita\n\n⚠️ Il Tasso di Circolarità (% riciclato) viene calcolato automaticamente.", eba: "L'alta produzione di rifiuti pericolosi (>50t/anno) è un flag di attenzione nel credit risk assessment per rischio operativo e passività ambientali." },
             'hr': { title: "B8: Forza Lavoro — Headcount", text: "Matrice dei dipendenti disaggregata per tipo di contratto, genere e area geografica.\n\n📌 Cosa inserire:\n• Dipendenti Permanenti FT/PT e Temporanei FT/PT\n• FTE manuale: equivalente a tempo pieno calcolato\n• Headcount per genere (Uomini/Donne/Altro/Non dichiarato)\n• Headcount per Paese (se multi-sito internazionale)\n• Turnover: uscite volontarie nell'anno e headcount a inizio periodo\n\n⚠️ La somma dei contratti DEVE coincidere con la somma per genere.", eba: "Il Gender Ratio e il Turnover Rate sono KPI sociali monitorati dal CSRD e dall'EBA per la valutazione del rischio reputazionale e di governance." },
             'b8': { title: "B8: Forza Lavoro — Headcount", text: "Dati quantitativi sui dipendenti diretti.\n\n• Metodologia: Consigliato l'uso della media annua per gestire i lavoratori stagionali.\n• Disaggregazione: Richiesta suddivisione per genere e per Paese operativo.\n• FTE: Equivalente a tempo pieno. Parametro fondamentale per rapportare i dati sociali.\n• Turnover: Percentuale di dipendenti usciti rispetto all'organico. Obbligatorio sopra i 50 dipendenti." },
@@ -136,7 +139,7 @@
             'c7': { title: "C7: Incidenti Diritti Umani", text: "Registra eventuali incidenti confermati relativi ai diritti umani.\n\n📌 Cosa inserire:\n• Indica se ci sono stati incidenti confermati nell'anno (Sì/No)\n• Se Sì: specifica il tipo (lavoro minorile, forzato, tratta, discriminazione)\n• Azioni di rimedio adottate (obbligatorio se Sì)\n• Incidenti nella catena del valore: fornitori o subappaltatori coinvolti\n\n⚠️ Lavoro minorile e forzato sono red flag assoluti per finanziamenti ESG.", eba: "Gli incidenti confermati su diritti umani sono PAI SFDR obbligatori e possono portare a exclusion screening da parte degli investitori istituzionali." },
             'c8': { title: "C8: Ricavi da Attività Controverse", text: "Monitora i ricavi da settori sensibili per verifica benchmark EU.\n\n📌 Cosa inserire:\n• Ricavi da armi controverse (€)\n• Ricavi da tabacco (€)\n• Ricavi da carbone termico (€)\n• Ricavi da petrolio e gas (€)\n• Ricavi da pesticidi/agrofarmaci controversi (€)\n\n⚠️ Soglie di esclusione dai Benchmark EU:\n- Armi controverse: qualsiasi importo → esclusione automatica\n- Tabacco: qualsiasi importo → esclusione\n- Carbone: > 1% ricavi totali\n- Petrolio/gas: > 10% ricavi totali", eba: "Il superamento delle soglie EBA/EU Taxonomy porta all'esclusione automatica dai Paris-Aligned Benchmark e dai Climate Transition Benchmark UE." },
             'c9': { title: "C9: Composizione del Board", text: "Dichiara la composizione per genere del Consiglio di Amministrazione.\n\n📌 Cosa inserire:\n• Numero consiglieri Donne\n• Numero consiglieri Uomini\n\n📊 Gender Diversity Ratio (%) = Donne CdA / Totale CdA × 100\n\nTarget raccomandato CSRD: ≥ 40% genere sottorappresentato.\n\n💡 Include sia consiglieri esecutivi che non esecutivi.", eba: "Il Gender Ratio del CdA è un KPI governance diretto richiesto dall'EBA nel Pillar 3 ESG Disclosure e dalla Direttiva CRD IV." },
-            
+
             /* ── Sub-topic field-level ── */
             'b3_scope2_custom': { title: "B3: Fattore di Emissione Personalizzato", text: "Attiva questa opzione se hai un contratto di fornitura elettrica con un fattore di emissione certificato (es. contratto 100% rinnovabile con GO).\n\n📌 Come trovare il valore:\n• Richiedi il 'Disclosure Factor' al tuo fornitore\n• Il valore è espresso in kgCO2e/kWh (es. 0.0 per 100% rinnovabile)\n• Inserisci 0 se hai copertura GO totale\n\n💡 Senza fattore personalizzato, viene usato il mix medio nazionale italiano (0.45 kgCO2e/kWh per il calcolo market-based)." },
             'defra': { title: "Import Fattori DEFRA", text: "Il DEFRA (UK Dept. for Environment) pubblica annualmente i fattori di emissione più aggiornati per carburanti ed energia.\n\n📌 Come usarlo:\n1. Scarica il file Excel ufficiale dal sito DEFRA (link nel modulo)\n2. Carica il file tramite il pulsante 'Importa da DEFRA'\n3. Il sistema rileva automaticamente i fattori per: Diesel, Benzina, Gas Naturale, GPL ed Elettricità\n4. Conferma i valori trovati prima di applicarli\n\n⚠️ Il file DEFRA usa kg CO2e per unità — il sistema converte automaticamente in kgCO2e/litro, kgCO2e/m³ e kgCO2e/kWh.", eba: "I fattori DEFRA sono riconosciuti come fonte primaria per i calcoli Scope 1 e 2 anche per aziende in assenza di fattori locali aggiornati." }
@@ -164,7 +167,18 @@
             if (cleaned.b3 && cleaned.b3.diesel_liters !== undefined && !cleaned.b3.scope1) cleaned.b3.scope1 = { stationary: { natural_gas_m3: cleaned.b3.natural_gas_m3 || 0, lpg_liters: 0, diesel_liters: 0 }, mobile: { diesel_liters: cleaned.b3.diesel_liters || 0, petrol_liters: cleaned.b3.petrol_liters || 0, lpg_liters: 0 } };
             if (cleaned.b4 && cleaned.b4.isMaterial === undefined) { cleaned.b4.isMaterial = cleaned.b4.pollutantsUrl ? "Sì" : ""; cleaned.b4.pollutantsList = []; }
             if (cleaned.b5 && !cleaned.b5.landUse) cleaned.b5 = { sitesBiodiversity: {}, landUse: { totalArea: 0, sealedArea: cleaned.b5.sealedArea || 0, natureAreaInside: 0, natureAreaOutside: 0 } };
-            if (cleaned.b6 && cleaned.b6.withdrawalTotal !== undefined && !cleaned.b6.sitesWater) cleaned.b6 = { sitesWater: {}, contextualNotes: "" };
+            if (cleaned.b6 && cleaned.b6.sitesWater) {
+                // Retrocompatibilità per B6 Water Stress (da booleano highStress a stringa stressLevel)
+                Object.keys(cleaned.b6.sitesWater).forEach(k => {
+                    let w = cleaned.b6.sitesWater[k];
+                    if (w.stressLevel === undefined) {
+                        w.stressLevel = w.highStress ? 'Alto (40-80%)' : 'Basso (<10%)';
+                        delete w.highStress;
+                    }
+                });
+            } else if (cleaned.b6 && cleaned.b6.withdrawalTotal !== undefined && !cleaned.b6.sitesWater) {
+                cleaned.b6 = { sitesWater: {}, contextualNotes: "" };
+            }
             if (cleaned.b7 && cleaned.b7.wasteTotal !== undefined && !cleaned.b7.circularStrategy) cleaned.b7 = { circularStrategy: { elimination: "", circulation: "", regeneration: "" }, onlyDomesticWaste: false, wasteList: [], massFlows: [] };
             if (cleaned.b8) {
                 if (!cleaned.b8.countryHeadcounts) cleaned.b8.countryHeadcounts = {};
@@ -240,7 +254,7 @@
             };
 
             const [data, setData] = useState(initialVsmeData);
-            
+
             const updateData = useCallback((section, field, value) => setData(prev => ({ ...prev, [section]: { ...prev[section], [field]: value } })), []);
             const updateScope3 = useCallback((catId, field, value) => setData(prev => ({ ...prev, b3: { ...prev.b3, scope3: { ...prev.b3.scope3, [catId]: { ...prev.b3.scope3[catId], [field]: value } } } })), []);
 
@@ -250,8 +264,8 @@
                 reader.onload = (evt) => {
                     try {
                         const loadedData = JSON.parse(evt.target.result);
-                        setData(migrateLegacyData(loadedData, initialVsmeData)); 
-                        alert("Dati caricati con successo."); 
+                        setData(migrateLegacyData(loadedData, initialVsmeData));
+                        alert("Dati caricati con successo.");
                     } catch (err) { alert("Errore parsing JSON."); }
                 }; reader.readAsText(file);
             };
@@ -271,7 +285,7 @@
         const useControllers = (data) => {
             return useMemo(() => {
                 const { b3: energy, b6: water, b7, b8, b9, b10, b1, b5, b11, c3, c4, c5, c6, c7, c8, c9, meta, settings: { emissionFactors: f } } = data;
-                
+
                 const referenceYear = meta.periodEnd ? new Date(meta.periodEnd).getFullYear() : new Date().getFullYear();
 
                 // GHG
@@ -299,17 +313,20 @@
                 let waterStressWithdrawal = 0, waterStressConsumption = 0;
                 if (b1.sites && b1.sites.length > 0) {
                     b1.sites.forEach(s => {
-                        const w = water.sitesWater[s.id] || { withdrawal: 0, discharge: 0, highStress: false };
+                        const w = water.sitesWater[s.id] || { withdrawal: 0, discharge: 0, stressLevel: 'Basso (<10%)' };
                         const cons = Math.max(0, (w.withdrawal || 0) - (w.discharge || 0));
                         waterTotalWithdrawal += (w.withdrawal || 0); waterTotalDischarge += (w.discharge || 0); waterTotalConsumption += cons;
-                        if(w.highStress) { waterStressWithdrawal += (w.withdrawal || 0); waterStressConsumption += cons; }
+
+                        // Logica di valutazione rischio (EFRAG 40% threshold = Alto o Estremo su WRI)
+                        const isHighStress = w.stressLevel === 'Alto (40-80%)' || w.stressLevel === 'Estremo (>80%)';
+                        if(isHighStress) { waterStressWithdrawal += (w.withdrawal || 0); waterStressConsumption += cons; }
                     });
                 }
                 const isMassFlowRequired = b1.naceCodes.some(n => { const c = n.code.toUpperCase().trim(); return c === 'C' || c === 'F' || c.startsWith('1') || c.startsWith('2') || c.startsWith('3') || c.startsWith('41') || c.startsWith('42') || c.startsWith('43') || c.startsWith('82.92'); });
                 let b7_totalWaste = 0, b7_totalRecycled = 0, b7_totalDisposed = 0, b7_hazardousWaste = 0, b7_nonHazardousWaste = 0;
                 if (!b7.onlyDomesticWaste && b7.wasteList) {
                     b7.wasteList.forEach(w => {
-                        const tot = Number(w.total) || 0; const rec = Number(w.recycled) || 0; const disp = Math.max(0, tot - rec); 
+                        const tot = Number(w.total) || 0; const rec = Number(w.recycled) || 0; const disp = Math.max(0, tot - rec);
                         b7_totalWaste += tot; b7_totalRecycled += rec; b7_totalDisposed += disp;
                         if (w.type === 'hazardous') b7_hazardousWaste += tot; else b7_nonHazardousWaste += tot;
                     });
@@ -338,7 +355,7 @@
                 const b10_cbaCoveragePct = b8_total_headcount > 0 ? (Number(b10.employeesCoveredByCBA) / b8_total_headcount) * 100 : 0;
                 const b10_avgTrainingMale = Number(b8.male) > 0 ? (Number(b10.trainingHoursMale) / Number(b8.male)) : 0;
                 const b10_avgTrainingFemale = Number(b8.female) > 0 ? (Number(b10.trainingHoursFemale) / Number(b8.female)) : 0;
-                const pay_gap_pct = b10.hourly_rate_male > 0 ? ((b10.hourly_rate_male - b10.hourly_rate_female) / b10.hourly_rate_male) * 100 : 0;
+                const pay_gap_pct = b10.hourly_rate_male > 0 ? Math.abs(((b10.hourly_rate_male - b10.hourly_rate_female) / b10.hourly_rate_male) * 100) : 0;
                 const c5_isExempt = b8_total_headcount < 50;
                 const c5_totalExternal = Number(c5.selfEmployed) + Number(c5.temporaryAgencyWorkers);
                 const c5_externalPct = b8_total_headcount > 0 ? (c5_totalExternal / b8_total_headcount) * 100 : 0;
@@ -387,7 +404,7 @@
                 if (!c5_isExempt && c5_externalPct > 50) gaps.push({ type: "warning", text: `Alta dipendenza da forza lavoro esterna (${fmt(c5_externalPct)}%). Rischio impatto sociale (C5).` });
                 if (pay_gap_pct > 5 && !b10_isPayGapExempt) gaps.push({ type: "warning", text: `Gender Pay Gap oltre soglia tolleranza EBA (${fmt(pay_gap_pct)}%).` });
                 if (b8_gender_diff > 0 || b8_country_diff > 0) gaps.push({ type: "warning", text: "Disallineamento nei totali della Forza Lavoro (Modulo B8)." });
-                if (isTurnoverRequired && !isTurnoverCalculable) { gaps.push({ type: "critical", text: `Impossibile calcolare il Turnover: dati mancanti (B8).` }); } 
+                if (isTurnoverRequired && !isTurnoverCalculable) { gaps.push({ type: "critical", text: `Impossibile calcolare il Turnover: dati mancanti (B8).` }); }
                 else if (isTurnoverRequired && (!b8.turnoverLeavers || b8.turnoverLeavers <= 0)) gaps.push({ type: "warning", text: "Turnover non dichiarato nonostante la soglia (>50 dipendenti) (B8)." });
                 if (b10.minimumWage === 'No') gaps.push({ type: "critical", text: "Presenza di dipendenti con retribuzione inferiore al salario minimo applicabile (Rischio Sociale B10)." });
                 if (b11.hasIncidents === '') gaps.push({ type: "warning", text: "Dichiarazione su corruzione e condotta aziendale (B11) mancante." });
@@ -403,11 +420,11 @@
                 if (isExcludedFromBenchmarks) gaps.push({ type: "critical", text: "Ricavi da attività sensibili (Armi/Tabacco/Fossili) oltre le soglie tollerate. Escluso dai Benchmark UE di Transizione (C8)." });
 
                 return {
-                    calc: { 
-                        referenceYear, 
-                        scope1, s1_stat, s1_mob, scope2_loc, scope2_mkt, scope3_tot, ghgTotalLoc, ghgTotalMkt, ghgIntensity, 
-                        b8_full_time, b8_part_time, b8_total_headcount, b8_gender_diff, b8_country_diff, isTurnoverRequired, averageHeadcount, calculatedTurnoverRate, isTurnoverCalculable, missingHeadcountStart, total_fte, 
-                        b9_injury_rate, b10_isPayGapExempt, b10_cbaCoveragePct, b10_avgTrainingMale, b10_avgTrainingFemale,
+                    calc: {
+                        referenceYear,
+                        scope1, s1_stat, s1_mob, scope2_loc, scope2_mkt, scope3_tot, ghgTotalLoc, ghgTotalMkt, ghgIntensity,
+                        b8_full_time, b8_part_time, b8_total_headcount, b8_gender_diff, b8_country_diff, isTurnoverRequired, averageHeadcount, calculatedTurnoverRate, isTurnoverCalculable, missingHeadcountStart, total_fte,
+                        b9_injury_rate, b10_isPayGapExempt, b10_cbaCoveragePct, b10_avgTrainingMale, b10_avgTrainingFemale, pay_gap_pct,
                         c5_isExempt, c5_totalExternal, c5_externalPct, c5_managementRatio,
                         globalRev, pctWeapons, pctTobacco, pctCoal, pctOilGas, pctChemicals, fossil_rev_pct, isExcludedFromBenchmarks,
                         board_diversity_ratio, boardTotal,
@@ -423,7 +440,7 @@
         /* =========================================================
            CUSTOM HOOKS (Architettura Modulare)
            ========================================================= */
-        
+
         // 1. Hook per la gestione dello stato della Guida EFRAG (Cronologia e sincronizzazione)
         const useEfragGuidance = (activeTab, guidanceDict) => {
             const [guideKey, setGuideKeyRaw] = useState('b1');
@@ -518,26 +535,26 @@
                 setState('loading');
                 parseDefraExcel(file, (res) => {
                     if (!res.ok) { setState('error'); setErrorMsg(res.error); return; }
-                    if (Object.keys(res.found).length === 0) { 
-                        setState('error'); 
-                        setErrorMsg('Nessun fattore riconosciuto. Verifica che il file sia il DEFRA Conversion Factors ufficiale.'); 
-                        return; 
+                    if (Object.keys(res.found).length === 0) {
+                        setState('error');
+                        setErrorMsg('Nessun fattore riconosciuto. Verifica che il file sia il DEFRA Conversion Factors ufficiale.');
+                        return;
                     }
-                    setPreview(res.found); 
+                    setPreview(res.found);
                     setState('preview');
                 });
                 e.target.value = '';
             }, []);
 
-            const confirmImport = useCallback(() => { 
-                onApply(preview); 
-                setState('idle'); 
-                setPreview({}); 
+            const confirmImport = useCallback(() => {
+                onApply(preview);
+                setState('idle');
+                setPreview({});
             }, [onApply, preview]);
 
-            const cancelImport = useCallback(() => { 
-                setState('idle'); 
-                setPreview({}); 
+            const cancelImport = useCallback(() => {
+                setState('idle');
+                setPreview({});
             }, []);
 
             return { state, preview, errorMsg, handleFile, confirmImport, cancelImport };
@@ -570,7 +587,7 @@
                     if (intPart.length > 1 && intPart.startsWith('0')) { intPart = intPart.replace(/^0+/, ''); if (intPart === '') intPart = '0'; }
                     if (intPart) intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
                     let formatted = decPart !== undefined ? `${intPart},${decPart}` : intPart;
-                    setLocalVal(formatted); 
+                    setLocalVal(formatted);
                     let num = parseFloat(plainStr.replace(',', '.'));
                     if (!isNaN(num)) onChange(num);
                 } else { setLocalVal(e.target.value); onChange(e.target.value); }
@@ -582,8 +599,8 @@
                 <div className="mb-4">
                     {label && <label className="flex items-center text-xs font-semibold text-slate-600 mb-1">{label}</label>}
                     <div className="relative">
-                        <input type={type === 'number' ? 'text' : type} inputMode={type === 'number' ? 'decimal' : 'text'} placeholder={placeholder} 
-                            className={`w-full bg-slate-50 border rounded-md p-2 text-sm focus:ring-blue-500 focus:border-blue-500 ${error ? 'border-red-500' : 'border-slate-300'} ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-200' : ''}`} 
+                        <input type={type === 'number' ? 'text' : type} inputMode={type === 'number' ? 'decimal' : 'text'} placeholder={placeholder}
+                            className={`w-full bg-slate-50 border rounded-md p-2 text-sm focus:ring-blue-500 focus:border-blue-500 ${error ? 'border-red-500' : 'border-slate-300'} ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-200' : ''}`}
                             value={localVal} onChange={handleChange} onBlur={handleBlur} disabled={disabled} />
                         {unit && <span className="absolute right-3 top-2 text-xs text-slate-400 font-bold">{unit}</span>}
                     </div>
@@ -652,7 +669,7 @@
                                     const isValidGeo = s.coordinates && geoRegex.test(s.coordinates.trim());
                                     const query = isValidGeo ? s.coordinates.replace(/\s/g, '') : encodeURIComponent(`${s.address} ${s.city} ${s.country}`);
                                     const mapLink = `https://www.google.com/maps/search/?api=1&query=${query}`;
-                                    
+
                                     return (
                                         <tr key={s.id} className="border-b bg-white">
                                             <td className="p-2"><input type="text" placeholder="Es. Sede" className="w-full p-1.5 border rounded text-xs bg-slate-50" value={s.name} onChange={e=>updateSite(s.id, 'name', e.target.value)} /></td>
@@ -1259,7 +1276,7 @@
 
         const ModuleB6 = ({ d_b6, d_b1, upd_b6, calc }) => {
             const [showWiz, setShowWiz] = useState(false);
-            const updateSiteWater = (id, field, value) => upd_b6('sitesWater', { ...d_b6.sitesWater, [id]: { ...(d_b6.sitesWater[id] || { withdrawal: 0, discharge: 0, highStress: false }), [field]: value } });
+            const updateSiteWater = (id, field, value) => upd_b6('sitesWater', { ...d_b6.sitesWater, [id]: { ...(d_b6.sitesWater[id] || { withdrawal: 0, discharge: 0, stressLevel: 'Basso (<10%)' }), [field]: value } });
             return (
                 <div className="space-y-6 animate-fadeIn">
                     <div className="flex justify-between bg-slate-50 p-4 rounded-lg border">
@@ -1268,24 +1285,56 @@
                     </div>
                     {showWiz && <CoworkingWizard sites={d_b1.sites} onApply={(id, v) => { updateSiteWater(id, 'withdrawal', v); setShowWiz(false); }} />}
                     <div className="border rounded-lg overflow-x-auto bg-white shadow-sm">
-                        <table className="w-full text-sm text-left"><thead className="bg-slate-100 text-xs border-b"><tr><th className="p-3">Sito (B1)</th><th className="p-3">Prelievo (m³)</th><th className="p-3">Scarico (m³)</th><th className="p-3 bg-slate-200/50">Consumo (m³)</th><th className="p-3 text-center">Alta Scarsità</th></tr></thead>
+                        <table className="w-full text-sm text-left"><thead className="bg-slate-100 text-xs border-b"><tr><th className="p-3">Sito (B1)</th><th className="p-3">Prelievo (m³)</th><th className="p-3">Scarico (m³)</th><th className="p-3 bg-slate-200/50">Consumo (m³)</th><th className="p-3 text-center">Livello Stress Idrico (WRI/EEA) <InfoButton topic="b6" /></th></tr></thead>
                             <tbody>
                                 {d_b1.sites && d_b1.sites[0].name ? d_b1.sites.map(s => {
-                                    const w = d_b6.sitesWater[s.id] || { withdrawal: 0, discharge: 0, highStress: false };
+                                    const w = d_b6.sitesWater[s.id] || { withdrawal: 0, discharge: 0, stressLevel: 'Basso (<10%)' };
                                     const cons = Math.max(0, (w.withdrawal||0) - (w.discharge||0));
+
+                                    // Determina se il livello di stress selezioato supera il 40% (EFRAG Threshold)
+                                    const isHighStress = w.stressLevel === 'Alto (40-80%)' || w.stressLevel === 'Estremo (>80%)';
+
                                     return (
-                                        <tr key={s.id} className={`border-b ${w.highStress?'bg-red-50/20':''}`}>
+                                        <tr key={s.id} className={`border-b ${isHighStress ? 'bg-red-50/20' : ''}`}>
                                             <td className="p-3 font-semibold">{s.name || 'Senza nome'}</td>
                                             <td className="p-2"><input type="number" step="any" className="w-full p-1.5 border rounded text-xs" value={w.withdrawal||''} onChange={e=>updateSiteWater(s.id, 'withdrawal', Number(e.target.value))} /></td>
                                             <td className="p-2"><input type="number" step="any" className="w-full p-1.5 border rounded text-xs" value={w.discharge||''} onChange={e=>updateSiteWater(s.id, 'discharge', Number(e.target.value))} /></td>
                                             <td className="p-3 font-mono font-bold text-blue-700 bg-slate-50/50">{fmt(cons)}</td>
-                                            <td className="p-3 text-center"><input type="checkbox" className="w-4 h-4 rounded cursor-pointer" checked={w.highStress} onChange={e=>updateSiteWater(s.id, 'highStress', e.target.checked)}/></td>
+
+                                            {/* Sostituzione Checkbox con Dropdown Intelligente */}
+                                            <td className="p-2">
+                                                <select
+                                                    className={`w-full p-1.5 border rounded text-xs font-semibold ${isHighStress ? 'bg-red-50 text-red-700 border-red-300' : 'bg-slate-50 border-slate-300 text-slate-700'}`}
+                                                    value={w.stressLevel || 'Basso (<10%)'}
+                                                    onChange={e=>updateSiteWater(s.id, 'stressLevel', e.target.value)}
+                                                >
+                                                    {STRESS_LEVELS.map(level => <option key={level} value={level}>{level}</option>)}
+                                                </select>
+                                            </td>
                                         </tr>
                                     );
                                 }) : <tr><td colSpan="5" className="p-4 text-center text-xs italic">Nessun sito operativo.</td></tr>}
                             </tbody>
                             <tfoot className="bg-slate-800 text-white font-bold text-xs"><tr><td className="p-3">Totale</td><td className="p-3">{fmt(calc.waterTotalWithdrawal)} m³</td><td className="p-3">{fmt(calc.waterTotalDischarge)} m³</td><td className="p-3 text-emerald-400">{fmt(calc.waterTotalConsumption)} m³</td><td></td></tr></tfoot>
                         </table>
+                    </div>
+
+                    {/* Banner Poka-Yoke Helper Contestuale */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex flex-col gap-3 shadow-sm mt-2">
+                        <div className="flex items-start gap-2 text-blue-900">
+                            <Info size={16} className="shrink-0 mt-0.5 text-blue-600" />
+                            <p className="text-xs font-medium leading-relaxed">
+                                <strong className="text-blue-700">Regola EFRAG (Par. 91-93):</strong> Seleziona nella tendina l'indicatore <strong className="font-bold underline">Water Stress</strong> (e non 'Overall Risk'). Il sistema calcolerà un'area a forte stress solo se il valore selezionato è <strong>Alto</strong> (40-80%) o <strong>Estremo</strong> (&gt;80%). Verifica l'ubicazione tramite:
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap gap-3 ml-6">
+                            <a href="https://www.wri.org/applications/aqueduct/water-risk-atlas" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold bg-white text-blue-700 border border-blue-300 px-3 py-1.5 rounded hover:bg-blue-100 hover:border-blue-400 transition-colors shadow-sm">
+                                <ExternalLink size={14} /> WRI Aqueduct
+                            </a>
+                            <a href="https://www.eea.europa.eu/data-and-maps/explore-interactive-maps/water-exploitation-index-for-river-1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold bg-white text-blue-700 border border-blue-300 px-3 py-1.5 rounded hover:bg-blue-100 hover:border-blue-400 transition-colors shadow-sm">
+                                <ExternalLink size={14} /> EEA WEI+
+                            </a>
+                        </div>
                     </div>
                 </div>
             );
@@ -1391,7 +1440,7 @@
                 <div className="bg-slate-50 p-5 rounded-lg border shadow-sm">
                     <h3 className="font-bold text-sm mb-4 border-b pb-3 flex gap-2"><Coins size={18} className="text-blue-600"/> Retribuzione e Pay Gap</h3>
                     <Select label="Retribuzione pari/superiore al salario minimo?" value={d.minimumWage} options={['Sì', 'No', 'N/A']} onChange={v=>upd('minimumWage', v)} />
-                    
+
                     {/* Modifica UX (Soluzione 3): Nascondere gli input se l'azienda è esente */}
                     <div className={`p-4 rounded-lg border mt-6 ${calc.b10_isPayGapExempt ? 'bg-emerald-50 border-emerald-200' : 'bg-white'}`}>
                         {calc.b10_isPayGapExempt ? (
@@ -1633,7 +1682,7 @@
 
         // PDF Helpers
         const PdfEmptyState = () => <div className="p-4 bg-slate-50 border border-slate-200 text-sm italic text-slate-500 mt-2 rounded">Dati non inseriti o sezione non applicabile.</div>;
-        
+
         const PdfSmartLink = ({ url }) => {
             if (!url) return <span className="italic text-slate-500 text-xs">Non fornito</span>;
             const validUrl = url.startsWith('http') ? url : `https://${url}`;
@@ -1716,7 +1765,7 @@
 
                 <div className="mt-6 pt-4 border-t border-slate-300"><h4 className="font-bold text-lg mb-3">Diversità CdA (Modulo C9)</h4>
                 {calc.boardTotal > 0 ? <p className="text-sm"><strong>Gender Diversity Ratio:</strong> {fmt(calc.board_diversity_ratio)}% (Donne: {fmtInt(data.c9.boardMembersFemale)} / Uomini: {fmtInt(data.c9.boardMembersMale)})</p> : <PdfEmptyState/>}</div>
-                
+
                 <div className="mt-6 pt-4 border-t border-slate-300"><h4 className="font-bold text-lg mb-3">Condotta Aziendale (Modulo B11)</h4>
                 {data.b11.hasIncidents === 'No' ? <p className="text-sm border-l-4 border-emerald-500 pl-3 py-1 bg-slate-50">Dichiarata assenza di condanne penali per corruzione o concussione.</p> : data.b11.hasIncidents === 'Sì' ? <div className="text-sm border-l-4 border-red-500 pl-3 py-2 bg-red-50"><p className="font-bold">Incidenti Registrati:</p><p>Condanne: {fmtInt(data.b11.corruptionConvictions)}</p><p>Ammontare Multe: € {fmtInt(data.b11.corruptionFines)}</p></div> : <PdfEmptyState />}</div>
 
@@ -1731,7 +1780,7 @@
         const PdfSection_Environment = ({ data, calc }) => (
             <div className="pdf-page-break pdf-avoid-break">
                 <h3 className="font-bold text-2xl border-b-4 border-emerald-700 text-emerald-800 mb-6 pb-2">3. Metriche Ambientali</h3>
-                
+
                 <h4 className="font-bold text-lg mb-3">Emissioni GHG (Modulo B3)</h4>
                 {(calc.scope1 > 0 || calc.scope2_loc > 0 || calc.scope3_tot > 0) ? (
                     <div className="grid grid-cols-2 gap-4 text-sm mb-6"><div className="border p-3"><strong>Scope 1:</strong> {fmt(calc.scope1)} tCO2e</div><div className="border p-3"><strong>Scope 2 (Loc):</strong> {fmt(calc.scope2_loc)} tCO2e</div><div className="border p-3"><strong>Scope 2 (Mkt):</strong> {fmt(calc.scope2_mkt)} tCO2e</div><div className="border p-3"><strong>Scope 3:</strong> {fmt(calc.scope3_tot)} tCO2e</div></div>
@@ -1755,11 +1804,11 @@
                 ) : data.b4.isMaterial === 'No' ? <p className="text-sm italic">Inquinamento considerato non materiale per il settore servizi (Esenzione Par. 69).</p> : <PdfEmptyState />}</div>
 
                 <div className="mt-6 pt-4 border-t border-slate-300"><h4 className="font-bold text-lg mb-3">Risorse Idriche (Modulo B6)</h4>
-                {calc.waterTotalWithdrawal > 0 ? <table className="w-full text-xs border text-left"><thead className="bg-slate-100"><tr><th className="p-2">Sito</th><th className="p-2 text-right">Prelievo (m³)</th><th className="p-2 text-right">Scarico (m³)</th><th className="p-2 text-right">Consumo (m³)</th></tr></thead><tbody>{data.b1.sites.map(s=>{const w = data.b6.sitesWater[s.id]||{}; const c = Math.max(0, (w.withdrawal||0)-(w.discharge||0)); return <tr key={s.id}><td className="p-2 border-t">{s.name} {w.highStress&&'(Stress Idrico)'}</td><td className="p-2 border-t text-right font-mono">{fmt(w.withdrawal)}</td><td className="p-2 border-t text-right font-mono">{fmt(w.discharge)}</td><td className="p-2 border-t text-right font-mono font-bold">{fmt(c)}</td></tr>})}</tbody></table> : <PdfEmptyState/>}</div>
+                {calc.waterTotalWithdrawal > 0 ? <table className="w-full text-xs border text-left"><thead className="bg-slate-100"><tr><th className="p-2">Sito</th><th className="p-2 text-right">Prelievo (m³)</th><th className="p-2 text-right">Scarico (m³)</th><th className="p-2 text-right">Consumo (m³)</th></tr></thead><tbody>{data.b1.sites.map(s=>{const w = data.b6.sitesWater[s.id]||{ stressLevel: 'Basso (<10%)' }; const c = Math.max(0, (w.withdrawal||0)-(w.discharge||0)); return <tr key={s.id}><td className="p-2 border-t">{s.name} {(w.stressLevel === 'Alto (40-80%)' || w.stressLevel === 'Estremo (>80%)')&&'(Stress Idrico)'}</td><td className="p-2 border-t text-right font-mono">{fmt(w.withdrawal)}</td><td className="p-2 border-t text-right font-mono">{fmt(w.discharge)}</td><td className="p-2 border-t text-right font-mono font-bold">{fmt(c)}</td></tr>})}</tbody></table> : <PdfEmptyState/>}</div>
 
                 <div className="mt-6 pt-4 border-t border-slate-300"><h4 className="font-bold text-lg mb-3">Rifiuti ed Economia Circolare (Modulo B7)</h4>
                 {data.b7.onlyDomesticWaste ? <p className="text-sm">Esenzione: Esclusivamente rifiuti urbani/domestici.</p> : calc.b7_totalWaste > 0 ? <p className="text-sm"><strong>Rifiuti Totali:</strong> {fmt(calc.b7_totalWaste)} t | <strong>Riciclati:</strong> {fmt(calc.b7_totalRecycled)} t | <strong>Smaltiti:</strong> {fmt(calc.b7_totalDisposed)} t | <strong>Circolarità:</strong> {fmt(calc.b7_circularityRate)}%</p> : <PdfEmptyState />}</div>
-                
+
                 <div className="mt-6 pt-4 border-t border-slate-300"><h4 className="font-bold text-lg mb-3">Biodiversità e Uso del Suolo (Modulo B5)</h4>
                 {(data.b5.landUse.sealedArea > 0 || data.b5.landUse.natureAreaInside > 0) ? <p className="text-sm"><strong>Area Sigillata:</strong> {fmtInt(data.b5.landUse.sealedArea)} m² | <strong>Aree Sensibili tracciate:</strong> {Object.values(data.b5.sitesBiodiversity).filter(b=>b.sensitiveAreaType!=='Nessuna').length}</p> : <PdfEmptyState/>}</div>
 
@@ -1781,7 +1830,7 @@
                             <p className="text-sm"><strong>Lavoratori Esterni (C5):</strong> {fmtInt(calc.c5_totalExternal)} | <strong>Rapporto Dirigenti (D:U):</strong> {calc.c5_managementRatio}</p>
                         </div>
                     ) : <PdfEmptyState />}
-                    
+
                     <div className="mt-6 pt-4 border-t border-slate-300"><h4 className="font-bold text-lg mb-3">Salute, Sicurezza e Retribuzione (Moduli B9, B10)</h4>
                     {(calc.b9_injury_rate > 0 || calc.b10_cbaCoveragePct > 0 || data.b10.minimumWage) ? (
                         <div className="grid grid-cols-2 gap-4 text-sm"><div className="border p-3"><strong>Tasso Infortuni (TRIR):</strong> {fmt(calc.b9_injury_rate, 2)}<br/><strong>Decessi (Infortuni/Malattie):</strong> {fmtInt(data.b9.fatalitiesInjuries)} / {fmtInt(data.b9.fatalitiesIllHealth)}</div><div className="border p-3"><strong>Copertura Sindacale:</strong> {fmt(calc.b10_cbaCoveragePct, 1)}%<br/><strong>Gender Pay Gap:</strong> {calc.b10_isPayGapExempt && data.b10.hourly_rate_male === 0 ? "Esente" : `${fmt(calc.pay_gap_pct)}%`}</div></div>
@@ -1830,7 +1879,7 @@
             const { calc, eba, errors } = useControllers(data);
             const [activeTab, setActiveTab] = useState('b1');
             const [pdfLayout, setPdfLayout] = useState('corporate');
-            
+
             // Applichiamo il nostro Custom Hook per la navigazione EFRAG
             const { guideKey, setGuideKey, guideBack, currentGuide, isSubTopic } = useEfragGuidance(activeTab, VSME_GUIDANCE);
 
@@ -1892,7 +1941,7 @@
                                 <div className="px-6 pt-6 pb-3 border-b border-blue-800 flex items-center gap-2">
                                     {isSubTopic && (
                                         <button onClick={guideBack} className="flex items-center gap-1 text-blue-400 hover:text-white text-xs font-bold mr-1 transition-colors" title="Torna indietro">
-                                            ← 
+                                            ←
                                         </button>
                                     )}
                                     <BookOpen className="text-blue-400 shrink-0" size={20}/>
