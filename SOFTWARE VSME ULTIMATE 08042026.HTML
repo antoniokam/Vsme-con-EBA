@@ -90,6 +90,9 @@
         const POLLUTANTS_PRESETS = ["Aria - Ossidi di Azoto (NOx)", "Aria - Ossidi di Zolfo (SOx)", "Aria - Particolato (PM10 / PM2.5)", "Aria - Ammoniaca (NH3)", "Acqua - Domanda Chimica Ossigeno (COD)", "Acqua - Domanda Biochimica Ossigeno (BOD)", "Acqua - Metalli Pesanti", "Suolo - Metalli Pesanti (Fanghi)", "Altro (Specifica manualmente...)"];
         const WASTE_PRESETS = { 'non-hazardous': ["Rifiuti urbani indifferenziati", "Imballaggi in carta e cartone (15 01 01)", "Imballaggi in plastica (15 01 02)", "Imballaggi in legno (15 01 03)", "Vetro (15 01 07)", "Metalli (15 01 04)", "Altro non pericoloso..."], 'hazardous': ["Oli esauriti / Lubrificanti (13 02*)", "Batterie al piombo (16 06 01*)", "Amianto (17 09 03*)", "Apparecchiature elettroniche WEEE (20 01 35*)", "Vernici e solventi (08 01 11*)", "Altro pericoloso / radioattivo..."] };
 
+        // Dizionario Livelli Stress Idrico EFRAG > WRI Aqueduct
+        const STRESS_LEVELS = ['Basso (<10%)', 'Medio-Basso (10-20%)', 'Medio-Alto (20-40%)', 'Alto (40-80%)', 'Estremo (>80%)'];
+
         const SCOPE3_CATEGORIES = [
             { id: 'cat1', label: '1. Beni e servizi acquistati', type: 'upstream', icon: <Box size={16}/>, volUnit: 'Tonn.', defaultSpendFactor: 0.45, defaultVolFactor: 2.5 },
             { id: 'cat2', label: '2. Beni strumentali', type: 'upstream', icon: <Factory size={16}/>, volUnit: 'Unità', defaultSpendFactor: 0.35, defaultVolFactor: 500 },
@@ -113,7 +116,6 @@
         SCOPE3_CATEGORIES.forEach(cat => { DEFAULT_FACTORS[`${cat.id}_spend`] = cat.defaultSpendFactor; DEFAULT_FACTORS[`${cat.id}_vol`] = cat.defaultVolFactor; });
 
         const VSME_GUIDANCE = {
-            /* ── Moduli principali ── */
             'b1': { title: "B1: Metadati e Basi per la preparazione", text: "Definisci il nome dell'azienda, periodo di rendicontazione (es. 01/01/2025 - 31/12/2025), perimetro e siti operativi.\n\n📌 Cosa inserire:\n• Nome azienda e forma giuridica (Srl, SpA, ecc.)\n• Date di inizio/fine del periodo di rendicontazione\n• Codice(i) NACE della tua attività principale\n• Ricavi e totale attivo (€)\n• Numero dipendenti totali\n• Lista siti operativi con indirizzo e coordinate GPS", eba: "Le banche valutano le geolocalizzazioni per mappare i Rischi Fisici degli immobili in portafoglio (es. rischio idrogeologico)." },
             'b2_c2': { title: "B2/C2: Strategia, Policy & Target", text: "Dichiara Pratiche, Politiche e Obiettivi per ogni tema ESG secondo i paragrafi 26 e 149.\n\n📌 Cosa inserire:\n• Spunta i temi ESG dove hai policy attive (B2)\n• Per il modulo C2, inserisci il testo della policy per ogni tema\n• Indica il responsabile ESG dell'azienda (C2 - accountability)\n• Specifica i target quantitativi dove disponibili", eba: "Le banche verificano la coerenza tra policy dichiarate e dati misurati nel report. Una policy senza dati a supporto è considerata 'greenwashing risk'." },
             'b3': { title: "B3: Scope 1 — Emissioni Dirette", text: "Le emissioni Scope 1 sono quelle generate direttamente dalla combustione di carburanti nelle tue attività.\n\n📌 Cosa inserire:\n• Combustibili per riscaldamento stazionario: inserisci i m³ di gas naturale consumati, litri di GPL o gasolio per caldaie\n• Combustibili per flotta aziendale: litri di diesel, benzina o GPL dei veicoli di proprietà\n\n💡 Fonte dati: fatture del fornitore di gas, schede carburante o sistema di fleet management.", eba: "Le emissioni Scope 1 sono il principale KPI per il calcolo dell'intensità carbonica (tCO2e/M€ ricavi) usata nel Green Asset Ratio bancario." },
@@ -121,7 +123,7 @@
             'b3_scope3': { title: "Scope 3: Emissioni Catena del Valore", text: "Lo Scope 3 copre le emissioni nella catena del valore (fornitori, clienti, logistica, dipendenti).\n\n📌 Come compilare:\n• Attiva solo le categorie rilevanti per il tuo settore\n• Metodo Spend: inserisci la spesa (€) per quella categoria — più semplice ma meno preciso\n• Metodo Volume: inserisci la quantità fisica (tonnellate, km, kWh) — più accurato\n\n⚠️ Categorie spesso obbligatorie:\nCat. 1 (Acquisti) e Cat. 6 (Viaggi di lavoro) sono richieste per quasi tutti i settori.\nPer settori industriali, Cat. 4 (Trasporti) e Cat. 5 (Rifiuti) sono essenziali.\n\n💡 Puoi importare i fattori DEFRA aggiornati tramite il tasto apposito.", eba: "Lo Scope 3 può rappresentare fino al 90% delle emissioni totali. Le banche lo usano per valutare il rischio di transizione dell'intera filiera." },
             'b4': { title: "B4: Inquinanti Atmosferici e Acquatici", text: "Registro delle emissioni inquinanti (non GHG) rilasciate nell'ambiente.\n\n📌 Cosa inserire:\n• Materialità: Settori come servizi o uffici sono esentati.\n• Aria: NOx, SOx, polveri sottili (PM10, PM2.5), ammoniaca.\n• Acqua: COD, BOD, metalli pesanti, nitrati.\n• Suolo: Sversamenti o fanghi industriali." },
             'b5': { title: "B5: Biodiversità e Uso del Suolo", text: "Impatto fisico degli spazi aziendali sull'ecosistema.\n\n📌 Cosa inserire:\n• Per ogni sito: area totale in ettari e tipo di area sensibile circostante\n• Aree sensibili: Rete Natura 2000, UNESCO, KBA, Liste Rosse IUCN\n• Uso del suolo: superficie impermeabilizzata (parcheggi, edifici), aree naturali gestite dentro/fuori l'azienda\n\n💡 Verifica la prossimità a Natura 2000 sul portale EEA (link disponibile nel modulo).", eba: "La presenza di siti in aree Natura 2000 o KBA è un trigger automatico per la valutazione del rischio biodiversità nel PCAF e nell'EU Taxonomy." },
-            'b6': { title: "B6: Risorse Idriche", text: "Gestione dell'acqua nei siti operativi.\n\n📌 Cosa inserire:\n• Prelievo (m³): acqua totale prelevata da rete, pozzi, acque superficiali\n• Scarico (m³): acqua reimmessa nell'ambiente o in fognatura (il consumo = prelievo − scarico)\n• Alta Scarsità: spunta se il sito è in zona a stress idrico elevato (WRI Aqueduct)\n\n💡 Wizard Uffici: usa il calcolatore automatico per sedi non produttive basato su dipendenti/m².", eba: "Il consumo idrico in zone ad alta scarsità è un KPI chiave per il rischio fisico climatico (drought risk) nel portafoglio bancario." },
+            'b6': { title: "B6: Risorse Idriche", text: "Gestione dell'acqua nei siti operativi.\n\n📌 Cosa inserire:\n• Prelievo (m³): acqua prelevata da rete, pozzi, ecc.\n• Scarico (m³): acqua reimmessa o in fognatura\n• Scarsità (Stress Idrico): seleziona la fascia di rischio del tuo sito.\n\n⚠️ Linee Guida EFRAG (Par. 91-93):\nUn'area è a 'forte stress idrico' se l'indicatore di stress di base supera il 40%.\nNel WRI Aqueduct, la soglia >40% scatta SOLO se l'indicatore 'Water Stress' è in fascia 'Alto (40-80%)' o 'Estremo (>80%)'. Assicurati di non confonderlo con l'indicatore 'Overall Water Risk'.", eba: "Il consumo idrico in zone ad alta scarsità (>40% WRI) è un KPI chiave per il rischio fisico climatico (drought risk) nel portafoglio bancario." },
             'b7': { title: "B7: Economia Circolare e Rifiuti", text: "Documenta la gestione dei rifiuti e la strategia circolare aziendale.\n\n📌 Cosa inserire:\n• Strategia circolare: descrivi le azioni di eliminazione, circolazione e rigenerazione dei materiali\n• Rifiuti: per ogni flusso inserisci tipologia (pericoloso/non pericoloso), quantità totale e quota avviata a recupero/riciclo\n• Flussi di massa: per settori manifatturieri, peso materie prime in entrata e prodotti in uscita\n\n⚠️ Il Tasso di Circolarità (% riciclato) viene calcolato automaticamente.", eba: "L'alta produzione di rifiuti pericolosi (>50t/anno) è un flag di attenzione nel credit risk assessment per rischio operativo e passività ambientali." },
             'hr': { title: "B8: Forza Lavoro — Headcount", text: "Matrice dei dipendenti disaggregata per tipo di contratto, genere e area geografica.\n\n📌 Cosa inserire:\n• Dipendenti Permanenti FT/PT e Temporanei FT/PT\n• FTE manuale: equivalente a tempo pieno calcolato\n• Headcount per genere (Uomini/Donne/Altro/Non dichiarato)\n• Headcount per Paese (se multi-sito internazionale)\n• Turnover: uscite volontarie nell'anno e headcount a inizio periodo\n\n⚠️ La somma dei contratti DEVE coincidere con la somma per genere.", eba: "Il Gender Ratio e il Turnover Rate sono KPI sociali monitorati dal CSRD e dall'EBA per la valutazione del rischio reputazionale e di governance." },
             'b8': { title: "B8: Forza Lavoro — Headcount", text: "Dati quantitativi sui dipendenti diretti.\n\n• Metodologia: Consigliato l'uso della media annua per gestire i lavoratori stagionali.\n• Disaggregazione: Richiesta suddivisione per genere e per Paese operativo.\n• FTE: Equivalente a tempo pieno. Parametro fondamentale per rapportare i dati sociali.\n• Turnover: Percentuale di dipendenti usciti rispetto all'organico. Obbligatorio sopra i 50 dipendenti." },
@@ -164,7 +166,18 @@
             if (cleaned.b3 && cleaned.b3.diesel_liters !== undefined && !cleaned.b3.scope1) cleaned.b3.scope1 = { stationary: { natural_gas_m3: cleaned.b3.natural_gas_m3 || 0, lpg_liters: 0, diesel_liters: 0 }, mobile: { diesel_liters: cleaned.b3.diesel_liters || 0, petrol_liters: cleaned.b3.petrol_liters || 0, lpg_liters: 0 } };
             if (cleaned.b4 && cleaned.b4.isMaterial === undefined) { cleaned.b4.isMaterial = cleaned.b4.pollutantsUrl ? "Sì" : ""; cleaned.b4.pollutantsList = []; }
             if (cleaned.b5 && !cleaned.b5.landUse) cleaned.b5 = { sitesBiodiversity: {}, landUse: { totalArea: 0, sealedArea: cleaned.b5.sealedArea || 0, natureAreaInside: 0, natureAreaOutside: 0 } };
-            if (cleaned.b6 && cleaned.b6.withdrawalTotal !== undefined && !cleaned.b6.sitesWater) cleaned.b6 = { sitesWater: {}, contextualNotes: "" };
+            if (cleaned.b6 && cleaned.b6.sitesWater) {
+                // Retrocompatibilità per B6 Water Stress (da booleano highStress a stringa stressLevel)
+                Object.keys(cleaned.b6.sitesWater).forEach(k => {
+                    let w = cleaned.b6.sitesWater[k];
+                    if (w.stressLevel === undefined) {
+                        w.stressLevel = w.highStress ? 'Alto (40-80%)' : 'Basso (<10%)';
+                        delete w.highStress;
+                    }
+                });
+            } else if (cleaned.b6 && cleaned.b6.withdrawalTotal !== undefined && !cleaned.b6.sitesWater) {
+                cleaned.b6 = { sitesWater: {}, contextualNotes: "" };
+            }
             if (cleaned.b7 && cleaned.b7.wasteTotal !== undefined && !cleaned.b7.circularStrategy) cleaned.b7 = { circularStrategy: { elimination: "", circulation: "", regeneration: "" }, onlyDomesticWaste: false, wasteList: [], massFlows: [] };
             if (cleaned.b8) {
                 if (!cleaned.b8.countryHeadcounts) cleaned.b8.countryHeadcounts = {};
@@ -297,10 +310,13 @@
                 let waterStressWithdrawal = 0, waterStressConsumption = 0;
                 if (b1.sites && b1.sites.length > 0) {
                     b1.sites.forEach(s => {
-                        const w = water.sitesWater[s.id] || { withdrawal: 0, discharge: 0, highStress: false };
+                        const w = water.sitesWater[s.id] || { withdrawal: 0, discharge: 0, stressLevel: 'Basso (<10%)' };
                         const cons = Math.max(0, (w.withdrawal || 0) - (w.discharge || 0));
                         waterTotalWithdrawal += (w.withdrawal || 0); waterTotalDischarge += (w.discharge || 0); waterTotalConsumption += cons;
-                        if(w.highStress) { waterStressWithdrawal += (w.withdrawal || 0); waterStressConsumption += cons; }
+                        
+                        // Logica di valutazione rischio (EFRAG 40% threshold = Alto o Estremo su WRI)
+                        const isHighStress = w.stressLevel === 'Alto (40-80%)' || w.stressLevel === 'Estremo (>80%)';
+                        if(isHighStress) { waterStressWithdrawal += (w.withdrawal || 0); waterStressConsumption += cons; }
                     });
                 }
                 const isMassFlowRequired = b1.naceCodes.some(n => { const c = n.code.toUpperCase().trim(); return c === 'C' || c === 'F' || c.startsWith('1') || c.startsWith('2') || c.startsWith('3') || c.startsWith('41') || c.startsWith('42') || c.startsWith('43') || c.startsWith('82.92'); });
@@ -336,7 +352,7 @@
                 const b10_cbaCoveragePct = b8_total_headcount > 0 ? (Number(b10.employeesCoveredByCBA) / b8_total_headcount) * 100 : 0;
                 const b10_avgTrainingMale = Number(b8.male) > 0 ? (Number(b10.trainingHoursMale) / Number(b8.male)) : 0;
                 const b10_avgTrainingFemale = Number(b8.female) > 0 ? (Number(b10.trainingHoursFemale) / Number(b8.female)) : 0;
-                const pay_gap_pct = b10.hourly_rate_male > 0 ? ((b10.hourly_rate_male - b10.hourly_rate_female) / b10.hourly_rate_male) * 100 : 0;
+                const pay_gap_pct = b10.hourly_rate_male > 0 ? Math.abs(((b10.hourly_rate_male - b10.hourly_rate_female) / b10.hourly_rate_male) * 100) : 0;
                 const c5_isExempt = b8_total_headcount < 50;
                 const c5_totalExternal = Number(c5.selfEmployed) + Number(c5.temporaryAgencyWorkers);
                 const c5_externalPct = b8_total_headcount > 0 ? (c5_totalExternal / b8_total_headcount) * 100 : 0;
@@ -405,7 +421,7 @@
                         referenceYear, 
                         scope1, s1_stat, s1_mob, scope2_loc, scope2_mkt, scope3_tot, ghgTotalLoc, ghgTotalMkt, ghgIntensity, 
                         b8_full_time, b8_part_time, b8_total_headcount, b8_gender_diff, b8_country_diff, isTurnoverRequired, averageHeadcount, calculatedTurnoverRate, isTurnoverCalculable, missingHeadcountStart, total_fte, 
-                        b9_injury_rate, b10_isPayGapExempt, b10_cbaCoveragePct, b10_avgTrainingMale, b10_avgTrainingFemale,
+                        b9_injury_rate, b10_isPayGapExempt, b10_cbaCoveragePct, b10_avgTrainingMale, b10_avgTrainingFemale, pay_gap_pct,
                         c5_isExempt, c5_totalExternal, c5_externalPct, c5_managementRatio,
                         globalRev, pctWeapons, pctTobacco, pctCoal, pctOilGas, pctChemicals, fossil_rev_pct, isExcludedFromBenchmarks,
                         board_diversity_ratio, boardTotal,
@@ -421,8 +437,6 @@
         /* =========================================================
            CUSTOM HOOKS (Architettura Modulare)
            ========================================================= */
-        
-        // 1. Hook per la gestione dello stato della Guida EFRAG (Cronologia e sincronizzazione)
         const useEfragGuidance = (activeTab, guidanceDict) => {
             const [guideKey, setGuideKeyRaw] = useState('b1');
             const [guideHistory, setGuideHistory] = useState([]);
@@ -453,13 +467,11 @@
             return { guideKey, setGuideKey, guideBack, currentGuide, isSubTopic };
         };
 
-        // 2. Hook per la gestione pura del file DEFRA tramite SheetJS
         const useDefraImport = (onApply) => {
             const [state, setState] = useState('idle'); // idle | loading | preview | error
             const [preview, setPreview] = useState({});
             const [errorMsg, setErrorMsg] = useState('');
 
-            // Utility pura per il parsing (incapsulata nell'hook)
             const parseDefraExcel = (file, onResult) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -518,7 +530,7 @@
                     if (!res.ok) { setState('error'); setErrorMsg(res.error); return; }
                     if (Object.keys(res.found).length === 0) { 
                         setState('error'); 
-                        setErrorMsg('Nessun fattore riconosciuto. Verifica che il file sia il DEFRA Conversion Factors ufficiale.'); 
+                        setErrorMsg('Nessun fattore riconosciuto. Verifica che il file sia il DEFRA ufficiale.'); 
                         return; 
                     }
                     setPreview(res.found); 
@@ -961,6 +973,7 @@
             );
         };
 
+        // UI Component: DefraImportPanel (View per l'import dei fattori emissivi)
         const DefraImportPanel = ({ onApply }) => {
             const { setGuideKey } = useGuidance();
             const { state, preview, errorMsg, handleFile, confirmImport, cancelImport } = useDefraImport(onApply);
@@ -1257,7 +1270,8 @@
 
         const ModuleB6 = ({ d_b6, d_b1, upd_b6, calc }) => {
             const [showWiz, setShowWiz] = useState(false);
-            const updateSiteWater = (id, field, value) => upd_b6('sitesWater', { ...d_b6.sitesWater, [id]: { ...(d_b6.sitesWater[id] || { withdrawal: 0, discharge: 0, highStress: false }), [field]: value } });
+            const updateSiteWater = (id, field, value) => upd_b6('sitesWater', { ...d_b6.sitesWater, [id]: { ...(d_b6.sitesWater[id] || { withdrawal: 0, discharge: 0, stressLevel: 'Basso (<10%)' }), [field]: value } });
+            
             return (
                 <div className="space-y-6 animate-fadeIn">
                     <div className="flex justify-between bg-slate-50 p-4 rounded-lg border">
@@ -1265,25 +1279,58 @@
                         <button onClick={() => setShowWiz(!showWiz)} className="text-xs font-semibold flex items-center gap-1 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded border border-indigo-200"><Calculator size={14}/> Wizard Coworking</button>
                     </div>
                     {showWiz && <CoworkingWizard sites={d_b1.sites} onApply={(id, v) => { updateSiteWater(id, 'withdrawal', v); setShowWiz(false); }} />}
+                    
                     <div className="border rounded-lg overflow-x-auto bg-white shadow-sm">
-                        <table className="w-full text-sm text-left"><thead className="bg-slate-100 text-xs border-b"><tr><th className="p-3">Sito (B1)</th><th className="p-3">Prelievo (m³)</th><th className="p-3">Scarico (m³)</th><th className="p-3 bg-slate-200/50">Consumo (m³)</th><th className="p-3 text-center">Alta Scarsità</th></tr></thead>
+                        <table className="w-full text-sm text-left"><thead className="bg-slate-100 text-xs border-b"><tr><th className="p-3">Sito (B1)</th><th className="p-3">Prelievo (m³)</th><th className="p-3">Scarico (m³)</th><th className="p-3 bg-slate-200/50">Consumo (m³)</th><th className="p-3 text-center">Livello Stress Idrico (WRI/EEA) <InfoButton topic="b6" /></th></tr></thead>
                             <tbody>
                                 {d_b1.sites && d_b1.sites[0].name ? d_b1.sites.map(s => {
-                                    const w = d_b6.sitesWater[s.id] || { withdrawal: 0, discharge: 0, highStress: false };
+                                    const w = d_b6.sitesWater[s.id] || { withdrawal: 0, discharge: 0, stressLevel: 'Basso (<10%)' };
                                     const cons = Math.max(0, (w.withdrawal||0) - (w.discharge||0));
+                                    
+                                    // Determina se il livello di stress selezioato supera il 40% (EFRAG Threshold)
+                                    const isHighStress = w.stressLevel === 'Alto (40-80%)' || w.stressLevel === 'Estremo (>80%)';
+
                                     return (
-                                        <tr key={s.id} className={`border-b ${w.highStress?'bg-red-50/20':''}`}>
+                                        <tr key={s.id} className={`border-b ${isHighStress ? 'bg-red-50/20' : ''}`}>
                                             <td className="p-3 font-semibold">{s.name || 'Senza nome'}</td>
                                             <td className="p-2"><input type="number" step="any" className="w-full p-1.5 border rounded text-xs" value={w.withdrawal||''} onChange={e=>updateSiteWater(s.id, 'withdrawal', Number(e.target.value))} /></td>
                                             <td className="p-2"><input type="number" step="any" className="w-full p-1.5 border rounded text-xs" value={w.discharge||''} onChange={e=>updateSiteWater(s.id, 'discharge', Number(e.target.value))} /></td>
                                             <td className="p-3 font-mono font-bold text-blue-700 bg-slate-50/50">{fmt(cons)}</td>
-                                            <td className="p-3 text-center"><input type="checkbox" className="w-4 h-4 rounded cursor-pointer" checked={w.highStress} onChange={e=>updateSiteWater(s.id, 'highStress', e.target.checked)}/></td>
+                                            
+                                            {/* Sostituzione Checkbox con Dropdown Intelligente */}
+                                            <td className="p-2">
+                                                <select 
+                                                    className={`w-full p-1.5 border rounded text-xs font-semibold ${isHighStress ? 'bg-red-50 text-red-700 border-red-300' : 'bg-slate-50 border-slate-300 text-slate-700'}`} 
+                                                    value={w.stressLevel || 'Basso (<10%)'} 
+                                                    onChange={e=>updateSiteWater(s.id, 'stressLevel', e.target.value)}
+                                                >
+                                                    {STRESS_LEVELS.map(level => <option key={level} value={level}>{level}</option>)}
+                                                </select>
+                                            </td>
                                         </tr>
                                     );
                                 }) : <tr><td colSpan="5" className="p-4 text-center text-xs italic">Nessun sito operativo.</td></tr>}
                             </tbody>
                             <tfoot className="bg-slate-800 text-white font-bold text-xs"><tr><td className="p-3">Totale</td><td className="p-3">{fmt(calc.waterTotalWithdrawal)} m³</td><td className="p-3">{fmt(calc.waterTotalDischarge)} m³</td><td className="p-3 text-emerald-400">{fmt(calc.waterTotalConsumption)} m³</td><td></td></tr></tfoot>
                         </table>
+                    </div>
+
+                    {/* Banner Poka-Yoke Helper Contestuale */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex flex-col gap-3 shadow-sm mt-2">
+                        <div className="flex items-start gap-2 text-blue-900">
+                            <Info size={16} className="shrink-0 mt-0.5 text-blue-600" />
+                            <p className="text-xs font-medium leading-relaxed">
+                                <strong className="text-blue-700">Regola EFRAG (Par. 91-93):</strong> Seleziona nella tendina l'indicatore <strong className="font-bold underline">Water Stress</strong> (e non 'Overall Risk'). Il sistema calcolerà un'area a forte stress solo se il valore selezionato è <strong>Alto</strong> (40-80%) o <strong>Estremo</strong> (&gt;80%). Verifica l'ubicazione tramite:
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap gap-3 ml-6">
+                            <a href="https://www.wri.org/applications/aqueduct/water-risk-atlas" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold bg-white text-blue-700 border border-blue-300 px-3 py-1.5 rounded hover:bg-blue-100 hover:border-blue-400 transition-colors shadow-sm">
+                                <ExternalLink size={14} /> WRI Aqueduct
+                            </a>
+                            <a href="https://www.eea.europa.eu/data-and-maps/explore-interactive-maps/water-exploitation-index-for-river-1" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold bg-white text-blue-700 border border-blue-300 px-3 py-1.5 rounded hover:bg-blue-100 hover:border-blue-400 transition-colors shadow-sm">
+                                <ExternalLink size={14} /> EEA WEI+
+                            </a>
+                        </div>
                     </div>
                 </div>
             );
@@ -1753,7 +1800,7 @@
                 ) : data.b4.isMaterial === 'No' ? <p className="text-sm italic">Inquinamento considerato non materiale per il settore servizi (Esenzione Par. 69).</p> : <PdfEmptyState />}</div>
 
                 <div className="mt-6 pt-4 border-t border-slate-300"><h4 className="font-bold text-lg mb-3">Risorse Idriche (Modulo B6)</h4>
-                {calc.waterTotalWithdrawal > 0 ? <table className="w-full text-xs border text-left"><thead className="bg-slate-100"><tr><th className="p-2">Sito</th><th className="p-2 text-right">Prelievo (m³)</th><th className="p-2 text-right">Scarico (m³)</th><th className="p-2 text-right">Consumo (m³)</th></tr></thead><tbody>{data.b1.sites.map(s=>{const w = data.b6.sitesWater[s.id]||{}; const c = Math.max(0, (w.withdrawal||0)-(w.discharge||0)); return <tr key={s.id}><td className="p-2 border-t">{s.name} {w.highStress&&'(Stress Idrico)'}</td><td className="p-2 border-t text-right font-mono">{fmt(w.withdrawal)}</td><td className="p-2 border-t text-right font-mono">{fmt(w.discharge)}</td><td className="p-2 border-t text-right font-mono font-bold">{fmt(c)}</td></tr>})}</tbody></table> : <PdfEmptyState/>}</div>
+                {calc.waterTotalWithdrawal > 0 ? <table className="w-full text-xs border text-left"><thead className="bg-slate-100"><tr><th className="p-2">Sito</th><th className="p-2 text-right">Prelievo (m³)</th><th className="p-2 text-right">Scarico (m³)</th><th className="p-2 text-right">Consumo (m³)</th></tr></thead><tbody>{data.b1.sites.map(s=>{const w = data.b6.sitesWater[s.id]||{ stressLevel: 'Basso (<10%)' }; const c = Math.max(0, (w.withdrawal||0)-(w.discharge||0)); return <tr key={s.id}><td className="p-2 border-t">{s.name} {(w.stressLevel === 'Alto (40-80%)' || w.stressLevel === 'Estremo (>80%)')&&'(Stress Idrico)'}</td><td className="p-2 border-t text-right font-mono">{fmt(w.withdrawal)}</td><td className="p-2 border-t text-right font-mono">{fmt(w.discharge)}</td><td className="p-2 border-t text-right font-mono font-bold">{fmt(c)}</td></tr>})}</tbody></table> : <PdfEmptyState/>}</div>
 
                 <div className="mt-6 pt-4 border-t border-slate-300"><h4 className="font-bold text-lg mb-3">Rifiuti ed Economia Circolare (Modulo B7)</h4>
                 {data.b7.onlyDomesticWaste ? <p className="text-sm">Esenzione: Esclusivamente rifiuti urbani/domestici.</p> : calc.b7_totalWaste > 0 ? <p className="text-sm"><strong>Rifiuti Totali:</strong> {fmt(calc.b7_totalWaste)} t | <strong>Riciclati:</strong> {fmt(calc.b7_totalRecycled)} t | <strong>Smaltiti:</strong> {fmt(calc.b7_totalDisposed)} t | <strong>Circolarità:</strong> {fmt(calc.b7_circularityRate)}%</p> : <PdfEmptyState />}</div>
